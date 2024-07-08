@@ -202,6 +202,8 @@ class Densification : public StageBase
      * @return True if successful
      */
     Depthmap::Ptr processStereoReconstruction(const std::deque<Frame::Ptr> &buffer, Frame::Ptr &frame_processed);
+    Depthmap::Ptr anydepth(const std::deque<Frame::Ptr> &buffer, Frame::Ptr &frame_processed);
+
 };
 
 } // namespace stages

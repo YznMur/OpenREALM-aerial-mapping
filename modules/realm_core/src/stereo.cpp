@@ -5,6 +5,13 @@
 
 #include <realm_core/stereo.h>
 
+
+//#include <image_transport/image_transport.h>
+//#include <cv_bridge/cv_bridge.h>
+//#include <sensor_msgs/Image.h>
+// #include <sensor_msgs/msg>
+
+
 void realm::stereo::computeRectification(const Frame::Ptr &frame_left,
                                          const Frame::Ptr &frame_right,
                                          cv::Mat &R1,
@@ -117,7 +124,7 @@ cv::Mat realm::stereo::reprojectDepthMap(const camera::Pinhole::ConstPtr &cam,
   return img3d;
 }
 
-cv::Mat realm::stereo::computeDepthMapFromPointCloud(const camera::Pinhole::ConstPtr &cam, const cv::Mat &points)
+cv::Mat realm::stereo::computeDepthMapFromPointCloud(const camera::Pinhole::ConstPtr &cam, const cv::Mat &points) // change to depth subscriber
 {
   /*
    * Depth computation according to [Hartley2004] "Multiple View Geometry in Computer Vision", S.162 for normalized
@@ -171,6 +178,9 @@ cv::Mat realm::stereo::computeDepthMapFromPointCloud(const camera::Pinhole::Cons
   }
   return depth_map;
 }
+
+
+
 
 cv::Mat realm::stereo::computeNormalsFromDepthMap(const cv::Mat& depth)
 {

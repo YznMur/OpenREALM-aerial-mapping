@@ -78,6 +78,8 @@ bool Densification::process()
   long t = getCurrentTimeMilliseconds();
   Frame::Ptr frame_processed;
   Depthmap::Ptr depthmap = processStereoReconstruction(m_buffer_reco, frame_processed);
+  // Depthmap::Ptr depthmap = anydepth(m_buffer_reco, frame_processed);
+  
   popFromBufferReco();
   updateStatisticsProcessedFrame();
 
@@ -103,8 +105,22 @@ bool Densification::process()
   frame_processed->setDepthmap(depthmap);
   LOG_IF_F(INFO, m_verbose, "Timing [Setting]: %lu ms", getCurrentTimeMilliseconds() - t);
 
+  // std::string fileName = "/home/trainer/anydepth_output/frame_depth.jpg"; 
+  // cv::Mat img = cv::imread(fileName); 
+  // // img.convertTo(img, CV_32F);
+  // cv::Size dsize(576, 324);
+  
+  // // Perform the resize
+  // cv::Mat resizedImg;
+  // cv::resize(img, resizedImg, dsize, 0, 0, cv::INTER_LINEAR);
+  // std::cout << "\033[33m";
+  // std::cout << " resizedImg777" << resizedImg.size() << std::endl;
+  // std::cout << "\033[0m";
+
+  
   // Creating dense cloud
   cv::Mat img3d = stereo::reprojectDepthMap(depthmap->getCamera(), depthmap->data());
+  // cv::Mat img3d = stereo::reprojectDepthMap(depthmap->getCamera(), resizedImg);
   cv::Mat dense_cloud = img3d.reshape(1, img3d.rows*img3d.cols);
 
   // Denoising
@@ -131,7 +147,6 @@ bool Densification::process()
 
   // Post processing
   depthmap->data() = applyDepthMapPostProcessing(depthmap->data());
-
   // Savings
   t = getCurrentTimeMilliseconds();
   saveIter(frame_processed, normals);
@@ -144,6 +159,8 @@ bool Densification::process()
 
   return true;
 }
+
+
 
 Frame::Ptr Densification::consistencyFilter(std::deque<std::pair<Frame::Ptr, cv::Mat>>* buffer_denoise)
 {
@@ -166,6 +183,10 @@ Frame::Ptr Densification::consistencyFilter(std::deque<std::pair<Frame::Ptr, cv:
 
     cv::Mat dense_cloud = f.second;
     cv::Mat depthmap_ij_data = stereo::computeDepthMapFromPointCloud(depthmap_ii->getCamera(), dense_cloud);
+    // std::cout << "\033[33m";
+    // std::cout << "Size of depthmap_ij_data  " << depthmap_ij_data.size() << std::endl;
+    // std::cout << "\033[0m";
+    // std::cout << "depthmap_ij_data: " << depthmap_ij_data << std::endl;
 
     for (int r = 0; r < rows; ++r)
       for (int c =0; c < cols; ++c)
@@ -233,13 +254,32 @@ Depthmap::Ptr Densification::processStereoReconstruction(const std::deque<Frame:
   LOG_F(INFO, "Baselines to reference frame: %s", stringbuffer.c_str());
 
   LOG_F(INFO, "Reconstructing frame #%u...", frame_processed->getFrameId());
-  Depthmap::Ptr depthmap = m_densifier->densify(buffer, (uint8_t)ref_idx);
+  Depthmap::Ptr depthmap = m_densifier->densify(buffer, (uint8_t)ref_idx); // replace with anydepth
 
+  // cv::Mat img = cv::imread(fileName, cv::IMREAD_UNCHANGED); 
+  // std::cout << "\033[33m";
+  // std::cout << "m_data.size " << img.size() << std::endl;
+  // std::cout << "\033[0m";
   LOG_IF_F(INFO, depthmap != nullptr, "Successfully reconstructed frame!");
   LOG_IF_F(WARNING, depthmap == nullptr, "Reconstruction failed!");
-
   return depthmap;
 }
+
+Depthmap::Ptr Densification::anydepth(const std::deque<Frame::Ptr> &buffer, Frame::Ptr &frame_processed)
+{
+  int ref_idx = (int)buffer.size()-1;
+  frame_processed = buffer[ref_idx];
+  std::string fileName = "/home/trainer/anydepth_output/frame_depth.jpg"; 
+  cv::Mat img = cv::imread(fileName); 
+  std::cout << "\033[33m";
+  // cv::Mat m_data = depthMap.data()
+  std::cout << "m_data.size" << img.size() << std::endl;
+  std::cout << "\033[0m";
+  img.convertTo(img, CV_32F);
+  auto depthMap = std::make_shared<Depthmap>(img, *frame_processed->getResizedCamera());
+  return depthMap;
+}
+
 
 Depthmap::Ptr Densification::forceInRange(const Depthmap::Ptr &depthmap, double min_depth, double max_depth)
 {

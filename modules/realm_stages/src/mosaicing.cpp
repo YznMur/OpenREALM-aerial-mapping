@@ -143,7 +143,8 @@ bool Mosaicing::process()
       }
 
       LOG_F(INFO, "Extracting updated map...");
-      map_update = std::make_shared<CvGridMap>(m_global_map->getSubmap({"color_rgb", "elevation"}, overlap.first->roi()));
+      map_update = std::make_shared<CvGridMap>(m_global_map->getSubmap({"color_rgb", "elevation"}, overlap.first->roi())); // add copy and publish it:  update_copy = std::make_shared<CvGridMap>(map->cloneSubmap({"elevation", "color_rgb"}));
+
     }
 
     // Publishings every iteration
